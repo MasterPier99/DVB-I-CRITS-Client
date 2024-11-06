@@ -50,6 +50,26 @@
 
 	</sld:ProviderOffering>
 
+<sld:ProviderOffering>
+    <sld:Provider>
+        <sld:Name>5G Broadcast</sld:Name>
+    </sld:Provider>
+
+    <sld:ServiceListOffering regulatorListFlag="false">
+        <sld:ServiceListName>5G Broadcast Service List</sld:ServiceListName>
+        <sld:ServiceListURI contentType="application/xml">
+            <dvbisd:URI>NO_LINK_AVAILABLE</dvbisd:URI>
+        </sld:ServiceListURI>
+        <sld:Delivery>
+            <sld:DASHDelivery/>
+        </sld:Delivery>
+    </sld:ServiceListOffering>
+</sld:ProviderOffering>
+
+
+
+
+
 	<sld:ProviderOffering>
 		<sld:Provider>
 			<sld:Name>DVB</sld:Name>
@@ -66,7 +86,7 @@
 		</sld:Provider>
 
     <sld:ServiceListOffering regulatorListFlag="false">
-    <sld:ServiceListName>Availability Windows service list</sld:ServiceListName>
+    <sld:ServiceListName>Availability Windows service list </sld:ServiceListName>
 			<sld:ServiceListURI contentType="application/xml">
 				<dvbisd:URI>INSTALL~~LOCATION/backend/servicelist.php?list=example_availability.xml</dvbisd:URI>
 			</sld:ServiceListURI>
