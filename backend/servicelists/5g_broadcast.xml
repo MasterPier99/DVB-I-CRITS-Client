@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceList version="1" id="tag:rai.org,2024:rai-5g-broadcast" xml:lang="it"
+    xmlns="urn:dvb:metadata:servicediscovery:2024" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:tva="urn:tva:metadata:2024"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:dvb:metadata:servicediscovery:2024 schemas/dvbi_v6.0.xsd">
+
+  <Name>RAI 5G Broadcast Service List</Name>
+  <ProviderName>RAI</ProviderName>
+
+  <LCNTableList>
+    <LCNTable>
+      <LCN channelNumber="1" serviceRef="tag:rai-referenceapp,2024:rai1"/>
+      <LCN channelNumber="2" serviceRef="tag:rai-referenceapp,2024:rai2"/>
+      <LCN channelNumber="3" serviceRef="tag:rai-referenceapp,2024:rai3"/>
+    </LCNTable>
+  </LCNTableList>
+
+  <ContentGuideSource CGSID="cgid-rai">
+    <ProviderName>RAI DVB-I Service</ProviderName>
+    <ScheduleInfoEndpoint contentType="application/xml">
+      <dvbi-types:URI>http://localhost/MyDVBi/backend/schedule.php</dvbi-types:URI>
+    </ScheduleInfoEndpoint>
+    <ProgramInfoEndpoint contentType="application/xml">
+      <dvbi-types:URI>http://localhost/MyDVBi/backend/program_information.php</dvbi-types:URI>
+    </ProgramInfoEndpoint>
+  </ContentGuideSource>
+
+  <!-- Canale RAI 1 -->
+  <Service version="1">
+    <UniqueIdentifier>tag:rai-referenceapp,2024:rai1</UniqueIdentifier>
+    <ServiceInstance priority="1">
+      <DisplayName>RAI 1 DVB-S</DisplayName>
+      <DVBSDeliveryParameters>
+        <DVBTriplet origNetId="318" tsId="5200" serviceId="3401"/>
+        <OrbitalPosition>13</OrbitalPosition>
+        <Frequency>1176600</Frequency>
+        <Polarization>vertical</Polarization>
+        <SymbolRate>29900</SymbolRate>
+      </DVBSDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="3">
+      <DisplayName>RAI 1 5G Broadcast</DisplayName>
+      <IdentifierBasedDeliveryParameters contentType="application/dash+xml">
+        mbms://rom.3gpp.org&amp;tmgi=000001901056&amp;serviceArea=222ff&amp;
+        frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI1%22
+      </IdentifierBasedDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="5">
+      <DisplayName>RAI 1 OTT (HLS)</DisplayName>
+      <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
+        https://www.example.com/hls/rai1_manifest.m3u8
+      </IdentifierBasedDeliveryParameters>
+    </ServiceInstance>
+    <ServiceName>RAI 1</ServiceName>
+    <ProviderName>RAI</ProviderName>
+  </Service>
+
+  <!-- Canale RAI 2 -->
+  <Service version="1">
+    <UniqueIdentifier>tag:rai-referenceapp,2024:rai2</UniqueIdentifier>
+    <ServiceInstance priority="1">
+      <DisplayName>RAI 2 DVB-S</DisplayName>
+      <DVBSDeliveryParameters>
+        <DVBTriplet origNetId="318" tsId="5200" serviceId="3402"/>
+        <OrbitalPosition>13</OrbitalPosition>
+        <Frequency>1176600</Frequency>
+        <Polarization>horizontal</Polarization>
+        <SymbolRate>29900</SymbolRate>
+      </DVBSDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="3">
+      <DisplayName>RAI 2 5G Broadcast</DisplayName>
+      <IdentifierBasedDeliveryParameters contentType="application/dash+xml">
+        mbms://rom.3gpp.org&amp;tmgi=000001901057&amp;serviceArea=222ff&amp;
+        frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI2%22
+      </IdentifierBasedDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="4">
+      <DisplayName>RAI 2 OTT (DASH)</DisplayName>
+      <DASHDeliveryParameters>
+        <UriBasedLocation contentType="application/dash+xml">
+          <dvbi-types:URI>https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd</dvbi-types:URI>
+        </UriBasedLocation>
+      </DASHDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="5">
+      <DisplayName>RAI 2 OTT (HLS)</DisplayName>
+      <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
+        https://www.example.com/hls/rai2_manifest.m3u8
+      </IdentifierBasedDeliveryParameters>
+    </ServiceInstance>
+    <ServiceName>RAI 2</ServiceName>
+    <ProviderName>RAI</ProviderName>
+  </Service>
+
+  <!-- Canale RAI 3 -->
+  <Service version="1">
+    <UniqueIdentifier>tag:rai-referenceapp,2024:rai3</UniqueIdentifier>
+    <ServiceInstance priority="2">
+      <DisplayName>RAI 3 DVB-S</DisplayName>
+      <DVBSDeliveryParameters>
+        <DVBTriplet origNetId="318" tsId="5200" serviceId="3403"/>
+        <OrbitalPosition>13</OrbitalPosition>
+        <Frequency>1176600</Frequency>
+        <Polarization>vertical</Polarization>
+        <SymbolRate>29900</SymbolRate>
+      </DVBSDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="1">
+      <DisplayName>RAI 3 5G Broadcast</DisplayName>
+      <!-- togliere application/dash+xml e farmelo restituire dal server php-->
+      <IdentifierBasedDeliveryParameters contentType="application/dash+xml">
+        mbms://rom.3gpp.org&amp;tmgi=000001901058&amp;serviceArea=222ff&amp;
+        frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI3%22
+      </IdentifierBasedDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="4">
+      <DisplayName>RAI 3 OTT (DASH)</DisplayName>
+      <DASHDeliveryParameters>
+        <UriBasedLocation contentType="application/dash+xml">
+          <dvbi-types:URI>https://5gemerge.crits.rai.it/5G-EMERGE/Live/dash/crits_linear/crits_linear.mpd</dvbi-types:URI>
+        </UriBasedLocation>
+      </DASHDeliveryParameters>
+    </ServiceInstance>
+    <ServiceInstance priority="5">
+      <DisplayName>RAI 3 OTT (HLS)</DisplayName>
+      <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
+        https://www.example.com/hls/rai3_manifest.m3u8
+      </IdentifierBasedDeliveryParameters>
+    </ServiceInstance>
+    <ServiceName>RAI 3</ServiceName>
+    <ProviderName>RAI</ProviderName>
+  </Service>
+
+</ServiceList>

@@ -707,6 +707,26 @@ function parseServiceList(data, dvbChannels, supportedDrmSystems) {
           }
         }
       }
+
+
+if (serviceInstances[j].getElementsByTagNameNS(DVBi_ns, "IdentifierBasedDeliveryParameters").length > 0) {
+  try {
+    var idBasedDelivery = serviceInstances[j].getElementsByTagNameNS(DVBi_ns, "IdentifierBasedDeliveryParameters")[0];
+    var contentType = idBasedDelivery.getAttribute("contentType");
+    var url = idBasedDelivery.textContent.trim();
+
+    if (contentType && url) {
+      instance.identifierBasedDelivery = {
+        contentType: contentType,
+        url: url,
+      };
+      sourceTypes.push("Identifier-Based Delivery");
+      instances.push(instance);
+    }
+  } catch (e) {
+    console.error("Errore nel parsing di IdentifierBasedDeliveryParameters:", e);
+  }
+}
       if (instance.mediaPresentationApps.length > 0 && instances.indexOf(instance) == -1) {
         instances.push(instance);
       }

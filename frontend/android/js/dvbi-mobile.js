@@ -16,6 +16,8 @@ var pinFailureCallback = null;
 var serviceList = null;
 var language_settings = null;
 var modalClosedCallback = null;
+var segnalatore = false;
+var FIVE_G_BROADCAST_RECEIVER_URL = "http://localhost/server_5g/server_5g.php"
 
 //TODO use MSE-EME to determine actual DRM support, although
 //support also depends on the audio and video codecs.
@@ -23,6 +25,8 @@ var modalClosedCallback = null;
 var supportedDrmSystems = ["edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"];
 
 function channelSelected(channelId) {
+
+
   $("#notification").hide();
   var newChannel = null;
   for (var i = 0; i < channels.length; i++) {
@@ -31,6 +35,11 @@ function channelSelected(channelId) {
       break;
     }
   }
+
+  if (!is5GBroadcastAvailable(newChannel)) {
+    console.log("5G Broadcast non disponibile per il canale selezionato.");
+  }
+
   if (!newChannel) {
     return;
   }
@@ -39,7 +48,7 @@ function channelSelected(channelId) {
     $("#notification").show();
     setTimeout(function () {
       $("#notification").hide();
-    }, 5000);
+    }, 10000);
     return;
   }
   closeEpg();
@@ -54,6 +63,44 @@ function channelSelected(channelId) {
   $("#play").hide();
   newChannel.channelSelected();
   selectedChannel = newChannel;
+
+  if (is5GBroadcastAvailable(newChannel)) {
+    console.log("Invio richiesta al ricevitore 5G Broadcast...");
+    console
+    console.log(newChannel.serviceInstances[1].identifierBasedDelivery);
+    const instance = newChannel.serviceInstances.find(inst =>
+      inst.identifierBasedDelivery &&
+      inst.identifierBasedDelivery.url.startsWith("mbms://rom.3gpp.org")
+    );
+
+    console.log("Questa è l' instance: "+ instance.identifierBasedDelivery.url);
+
+
+    if (instance) {
+        const tmgiParams = {
+            tmgi: instance.identifierBasedDelivery.url.match(/tmgi=([^&]+)/)[1],
+            serviceArea: instance.identifierBasedDelivery.url.match(/serviceArea=([^&]+)/)[1],
+            frequency: instance.identifierBasedDelivery.url.match(/frequency=([^&]+)/)[1],
+            subCarrierSpacing: instance.identifierBasedDelivery.url.match(/subCarrierSpacing=([^&]+)/)[1],
+            bandwidth: instance.identifierBasedDelivery.url.match(/bandwidth=([^&]+)/)[1],
+            serviceID: instance.identifierBasedDelivery.url.match(/serviceID=([^&]+)/)[1]
+        };
+        //console.log("Questi sono i parametri tmg: " + tmgiParams.frequency);
+        tmgiParams.frequency =  convertFrequnecy(tmgiParams.frequency);
+        //console.log("frequenza convertita: " + tmgiParams.frequency);
+        check_tmgi(tmgiParams.tmgi);
+
+        send5GBroadcastRequest(tmgiParams)
+            .then(mpdUrl => {
+                console.log("Streaming da URL:", mpdUrl);
+                player.attachSource(mpdUrl);
+            })
+            .catch(error => {
+                console.error("Errore nel processo 5G Broadcast:", error);
+            });
+    }
+}
+
 }
 
 window.onload = function () {
@@ -160,7 +207,7 @@ window.onload = function () {
     console.log(e);
     $("#notification").show();
     if (e.error && e.error.message) {
-      var errMessage = "Error playing stream ";
+      var errMessage = "Error playing";
       if (e.error.data && e.error.data.response) {
         errMessage += "(" + e.error.data.response.status;
         if (e.error.data.response.statusText.length > 0) errMessage += ":" + e.error.data.response.statusText;
@@ -171,7 +218,8 @@ window.onload = function () {
     } else {
       $("#notification").text("Error playing stream!");
     }
-  });
+  }
+);
   player.attachTTMLRenderingDiv(document.getElementById("subtitles"));
   var ll_settings = getLocalStorage("ll_settings");
   if (ll_settings) {
@@ -965,4 +1013,77 @@ function modalClosed() {
     modalClosedCallback.call();
     modalClosedCallback = null;
   }
+}
+
+function is5GBroadcastAvailable(channel) {
+  //console.log("Canale che si sta controllando:", channel);
+
+  let is5GBroadcastAvailable = false;
+
+  if (channel && channel.serviceInstances) {
+    channel.serviceInstances.forEach((instance, index) => {
+      //console.log(`Analisi Service Instance ${index}:`, instance);
+
+      if (
+        instance.identifierBasedDelivery &&
+        instance.identifierBasedDelivery.url.startsWith("mbms://rom.3gpp.org")
+      ) {
+        //console.log(`Verifica 5G Broadcast per MBMS URL: ${instance.identifierBasedDelivery.url}`);
+        is5GBroadcastAvailable = true;
+      }
+    });
+  } else {
+    console.error("Nessuna Service Instance trovata per il canale selezionato.");
+  }
+
+  if (!is5GBroadcastAvailable) {
+    //console.log("Errore: La trasmissione in 5G Broadcast non è disponibile.");
+    $("#notification").show();
+    $("#notification").text("Errore: La trasmissione in 5G Broadcast non è disponibile!");
+  }
+
+  return is5GBroadcastAvailable;
+}
+
+function send5GBroadcastRequest(params) {
+  return fetch(FIVE_G_BROADCAST_RECEIVER_URL, {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json"
+      },
+      body: JSON.stringify(params)
+  })
+  .then(response => {
+      if (!response.ok) {
+          throw new Error("Errore nella comunicazione con il ricevitore 5G Broadcast");
+      }
+      return response.json();
+  })
+  .then(data => {
+      console.log("Risposta dal server 5G Broadcast:", data);
+      return data.mpd_url;
+  })
+  .catch(error => {
+      console.error("Errore nella richiesta 5G Broadcast:", error);
+      $("#notification").show();
+      $("#notification").text("Errore: Non è stato possibile comunicare con il ricevitore 5G Broadcast.");
+      throw error;
+  });
+}
+
+function convertFrequnecy(frequency){
+  let  range1 = [612, 70706];
+  let  range2 = [470, 71106];
+
+  if(frequency >= 70706 && frequency <= 71105){
+    return range1[0] + (0.1 * (frequency - range1[1]));
+  }
+  else {
+    return range2[0] + (0.1 * (frequency - range2[1]));
+  }
+}
+
+function check_tmgi(tmgi){
+  //console.log("Nuemro di caratteri tmgi: " + tmgi.length);
+  return tmgi.length == 12;
 }

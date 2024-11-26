@@ -58,7 +58,7 @@
     <sld:ServiceListOffering regulatorListFlag="false">
         <sld:ServiceListName>5G Broadcast Service List</sld:ServiceListName>
         <sld:ServiceListURI contentType="application/xml">
-            <dvbisd:URI>NO_LINK_AVAILABLE</dvbisd:URI>
+            <dvbisd:URI>INSTALL~~LOCATION/backend/servicelist.php?list=5g_broadcast.xml</dvbisd:URI>
         </sld:ServiceListURI>
         <sld:Delivery>
             <sld:DASHDelivery/>

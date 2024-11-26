@@ -354,6 +354,18 @@ body.player {
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
 }
+
+#notification2 {
+  background-color: #ff00bf;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
 #notification.noservice {
   background-color: transparent;
   width: 50%;

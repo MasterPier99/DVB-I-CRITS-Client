@@ -99,7 +99,7 @@ function addServiceInstance(serviceId, instanceElement) {
       } else if (children[i].nodeName === "DisplayName") {
         document.getElementById("instance_" + serviceId + "_" + instanceId + "_displayname").value =
           children[i].childNodes[0].nodeValue;
-      } else if (children[i].nodeName === "DASHDeliveryParameters") {
+      } else if (children[i].nodeName === "DASHDeliveryParameters" || children[i].nodeName === "IdentifierBasedDeliveryParameters") {
         changeSourceType(instanceDiv.id, SOURCE_DVB_DASH);
         try {
           document.getElementById("instance_" + serviceId + "_" + instanceId + "_dash_uri").value = children[
