@@ -712,12 +712,10 @@ function parseServiceList(data, dvbChannels, supportedDrmSystems) {
 if (serviceInstances[j].getElementsByTagNameNS(DVBi_ns, "IdentifierBasedDeliveryParameters").length > 0) {
   try {
     var idBasedDelivery = serviceInstances[j].getElementsByTagNameNS(DVBi_ns, "IdentifierBasedDeliveryParameters")[0];
-    var contentType = idBasedDelivery.getAttribute("contentType");
     var url = idBasedDelivery.textContent.trim();
 
-    if (contentType && url) {
+    if (url) {
       instance.identifierBasedDelivery = {
-        contentType: contentType,
         url: url,
       };
       sourceTypes.push("Identifier-Based Delivery");

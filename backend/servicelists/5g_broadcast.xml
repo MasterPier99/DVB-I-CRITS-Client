@@ -40,7 +40,7 @@
     </ServiceInstance>
     <ServiceInstance priority="3">
       <DisplayName>RAI 1 5G Broadcast</DisplayName>
-      <IdentifierBasedDeliveryParameters contentType="application/dash+xml">
+      <IdentifierBasedDeliveryParameters>
         mbms://rom.3gpp.org&amp;tmgi=000001901056&amp;serviceArea=222ff&amp;
         frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI1%22
       </IdentifierBasedDeliveryParameters>
@@ -70,7 +70,7 @@
     </ServiceInstance>
     <ServiceInstance priority="3">
       <DisplayName>RAI 2 5G Broadcast</DisplayName>
-      <IdentifierBasedDeliveryParameters contentType="application/dash+xml">
+      <IdentifierBasedDeliveryParameters>
         mbms://rom.3gpp.org&amp;tmgi=000001901057&amp;serviceArea=222ff&amp;
         frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI2%22
       </IdentifierBasedDeliveryParameters>
@@ -78,9 +78,7 @@
     <ServiceInstance priority="4">
       <DisplayName>RAI 2 OTT (DASH)</DisplayName>
       <DASHDeliveryParameters>
-        <UriBasedLocation contentType="application/dash+xml">
           <dvbi-types:URI>https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd</dvbi-types:URI>
-        </UriBasedLocation>
       </DASHDeliveryParameters>
     </ServiceInstance>
     <ServiceInstance priority="5">
@@ -106,26 +104,24 @@
         <SymbolRate>29900</SymbolRate>
       </DVBSDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="1">
+    <ServiceInstance priority="6">
       <DisplayName>RAI 3 5G Broadcast</DisplayName>
       <!-- togliere application/dash+xml e farmelo restituire dal server php-->
-      <IdentifierBasedDeliveryParameters contentType="application/dash+xml">
+      <IdentifierBasedDeliveryParameters>
         mbms://rom.3gpp.org&amp;tmgi=000001901058&amp;serviceArea=222ff&amp;
         frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI3%22
       </IdentifierBasedDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="4">
+    <ServiceInstance priority="5">
       <DisplayName>RAI 3 OTT (DASH)</DisplayName>
       <DASHDeliveryParameters>
-        <UriBasedLocation contentType="application/dash+xml">
           <dvbi-types:URI>https://5gemerge.crits.rai.it/5G-EMERGE/Live/dash/crits_linear/crits_linear.mpd</dvbi-types:URI>
-        </UriBasedLocation>
       </DASHDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="5">
+    <ServiceInstance priority="1">
       <DisplayName>RAI 3 OTT (HLS)</DisplayName>
       <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
-        https://www.example.com/hls/rai3_manifest.m3u8
+        https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8
       </IdentifierBasedDeliveryParameters>
     </ServiceInstance>
     <ServiceName>RAI 3</ServiceName>

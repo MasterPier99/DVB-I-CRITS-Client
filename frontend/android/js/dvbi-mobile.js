@@ -16,7 +16,7 @@ var pinFailureCallback = null;
 var serviceList = null;
 var language_settings = null;
 var modalClosedCallback = null;
-var segnalatore = false;
+var fiveg = false;
 var FIVE_G_BROADCAST_RECEIVER_URL = "http://localhost/server_5g/server_5g.php"
 
 //TODO use MSE-EME to determine actual DRM support, although
@@ -64,10 +64,10 @@ function channelSelected(channelId) {
   newChannel.channelSelected();
   selectedChannel = newChannel;
 
+
   if (is5GBroadcastAvailable(newChannel)) {
     console.log("Invio richiesta al ricevitore 5G Broadcast...");
-    console
-    console.log(newChannel.serviceInstances[1].identifierBasedDelivery);
+    //console.log(newChannel.serviceInstances[0].identifierBasedDelivery);
     const instance = newChannel.serviceInstances.find(inst =>
       inst.identifierBasedDelivery &&
       inst.identifierBasedDelivery.url.startsWith("mbms://rom.3gpp.org")
@@ -99,7 +99,26 @@ function channelSelected(channelId) {
                 console.error("Errore nel processo 5G Broadcast:", error);
             });
     }
+ }
+ else if (!isHLSavailable(newChannel)) {
+  console.log("HLS disponibile per il canale selezionato.");
+
+  const hlsUrl = getHLSLink(newChannel);
+
+  if (hlsUrl) {
+      console.log("Avvio del player HLS con URL:", hlsUrl);
+      localStorage.setItem('currentHLSUrl', hlsUrl);
+
+      // Carica il player HLS
+      //window.location.href = "hls/player.html";
+  } else {
+      console.error("Errore: Nessun link HLS disponibile per il canale selezionato.");
+      $("#notification").text("Errore: Nessun link HLS disponibile per il canale selezionato.").show();
+      setTimeout(() => $("#notification").hide(), 10000);
+  }
 }
+
+
 
 }
 
@@ -215,6 +234,8 @@ window.onload = function () {
       }
       errMessage += e.error.message;
       $("#notification").text(errMessage);
+      console.log("Siamo dopo l'errore");
+
     } else {
       $("#notification").text("Error playing stream!");
     }
@@ -1023,13 +1044,13 @@ function is5GBroadcastAvailable(channel) {
   if (channel && channel.serviceInstances) {
     channel.serviceInstances.forEach((instance, index) => {
       //console.log(`Analisi Service Instance ${index}:`, instance);
-
       if (
         instance.identifierBasedDelivery &&
         instance.identifierBasedDelivery.url.startsWith("mbms://rom.3gpp.org")
       ) {
         //console.log(`Verifica 5G Broadcast per MBMS URL: ${instance.identifierBasedDelivery.url}`);
         is5GBroadcastAvailable = true;
+        fiveg = true;
       }
     });
   } else {
@@ -1086,4 +1107,48 @@ function convertFrequnecy(frequency){
 function check_tmgi(tmgi){
   //console.log("Nuemro di caratteri tmgi: " + tmgi.length);
   return tmgi.length == 12;
+}
+
+function isHLSavailable(channel){
+  let isHLSavailable = false;
+
+  if (channel && channel.serviceInstances) {
+    channel.serviceInstances.forEach((instance, index) => {
+      //console.log(`Analisi Service Instance ${index}:`, instance);
+      if (
+        instance.identifierBasedDelivery &&
+        instance.identifierBasedDelivery.url.charAt(instance.identifierBasedDelivery.url.length-1) == 8
+      ) {
+        //console.log("sono dentro l'if e l'ultimo carattere è: " + instance.identifierBasedDelivery.url.charAt(instance.identifierBasedDelivery.url.length-1))
+        isHLSavailable = true;
+      }
+    });
+  } else {
+    console.error("Nessuna Service Instance trovata per il canale selezionato.");
+  }
+
+  if (!isHLSavailable) {
+    //console.log("Errore: La trasmissione in 5G Broadcast non è disponibile.");
+    $("#notification").show();
+    $("#notification").text("Errore: La trasmissione in HLS non è disponibile!");
+  }
+
+  return isHLSavailable;
+
+
+}
+
+function getHLSLink(channel) {
+  var hlsUrl;
+  if (channel && channel.serviceInstances) {
+    channel.serviceInstances.forEach((instance, index) => {
+      //console.log(`Analisi Service Instance ${index}:`, instance);
+      if (instance.identifierBasedDelivery.url.endsWith('8') ){
+        hlsUrl = instance.identifierBasedDelivery.url;
+        console.log(instance.identifierBasedDelivery.url);
+      }
+      });
+
+  return hlsUrl;
+  }
 }
