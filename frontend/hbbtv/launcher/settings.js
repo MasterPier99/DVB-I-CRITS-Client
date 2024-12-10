@@ -688,6 +688,7 @@ function showUILanguageSettings() {
         _menu_.items[i].languageChanged();
       }
       var channel_obj = _menu_.getOpenChannel();
+      console.log("SIAMO QUA GETLOCALIZE TEXT");
       document.getElementById("info_name").innerHTML = getLocalizedText(
         channel_obj.titles,
         languages.ui_language

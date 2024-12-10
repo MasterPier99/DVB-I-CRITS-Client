@@ -1246,6 +1246,7 @@ function keyEnter() {
     }
 
     if (activeBox instanceof Box) {
+      console.log("SIAMO QUA GETLOCALIZE TEXT");
       document.getElementById("info_num").innerHTML = channel_obj.lcn + ".";
       document.getElementById("info_name").innerHTML = getLocalizedText(
         channel_obj.titles,
