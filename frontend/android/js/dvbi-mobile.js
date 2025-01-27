@@ -19,38 +19,39 @@ var language_settings = null;
 const UTC_TIME_SOURCE = "https://time.akamai.com/?iso";
 var FIVE_G_BROADCAST_RECEIVER_URL = "http://localhost/server_5g/server_5g.php"
 
+
 //TODO use MSE-EME to determine actual DRM support, although
 //support also depends on the audio and video codecs.
 //For now, use hardcoded widevine for android client
 var supportedDrmSystems = ["edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"];
 
-function channelSelected(channelId) {
+async function channelSelected(channelId) {
 	$("#notification").hide();
-	var newChannel = null;
+	let newChannel = null;
 	for (var i = 0; i < channels.length; i++) {
-		if(channels[i].id == channelId) {
-			newChannel =channels[i];
-			break;
-		}
+			if (channels[i].id === channelId) {
+					newChannel = channels[i];
+					break;
+			}
 	}
-	if(newChannel == selectedChannel) {
-		return;
+	if (newChannel === selectedChannel) {
+			return;
+	} else if (!newChannel) {
+			return;
 	}
-	else if(!newChannel) {
-		return;
+
+	if (newChannel.serviceInstances.length === 0) {
+			$("#notification").text("Service not supported");
+			$("#notification").show();
+			setTimeout(function () {
+					$("#notification").hide();
+			}, 5000);
+			return;
 	}
-  if (!is5GBroadcastAvailable(newChannel)) {
-    console.log("5G Broadcast non disponibile per il canale selezionato.");
-  }
-	if(newChannel.serviceInstances.length == 0) {
-	  $("#notification").text("Service not supported");
-	  $("#notification").show();
-	  setTimeout(function() { $("#notification").hide();} , 5000);
-	  return;
-	}
+
 	closeEpg();
-	if(selectedChannel) {
-		selectedChannel.unselected();
+	if (selectedChannel) {
+			selectedChannel.unselected();
 	}
 	$("#tracklist").empty();
 	$("#tracklist").hide();
@@ -61,60 +62,11 @@ function channelSelected(channelId) {
 	newChannel.channelSelected();
 	selectedChannel = newChannel;
 
-  if (is5GBroadcastAvailable(newChannel)) {
-    console.log("Invio richiesta al ricevitore 5G Broadcast...");
-    //console.log(newChannel.serviceInstances[0].identifierBasedDelivery);
-    const instance = newChannel.serviceInstances.find(inst =>
-      inst.identifierBasedDelivery &&
-      inst.identifierBasedDelivery.url.startsWith("mbms://rom.3gpp.org")
-    );
 
-    console.log(instance);
-
-
-    if (instance) {
-        const tmgiParams = {
-            tmgi: instance.identifierBasedDelivery.url.match(/tmgi=([^&]+)/)[1],
-            serviceArea: instance.identifierBasedDelivery.url.match(/serviceArea=([^&]+)/)[1],
-            frequency: instance.identifierBasedDelivery.url.match(/frequency=([^&]+)/)[1],
-            subCarrierSpacing: instance.identifierBasedDelivery.url.match(/subCarrierSpacing=([^&]+)/)[1],
-            bandwidth: instance.identifierBasedDelivery.url.match(/bandwidth=([^&]+)/)[1],
-            serviceID: instance.identifierBasedDelivery.url.match(/serviceID=([^&]+)/)[1]
-        };
-        //console.log("Questi sono i parametri tmg: " + tmgiParams.frequency);
-        tmgiParams.frequency =  convertFrequnecy(tmgiParams.frequency);
-        //console.log("frequenza convertita: " + tmgiParams.frequency);
-        check_tmgi(tmgiParams.tmgi);
-
-        send5GBroadcastRequest(tmgiParams)
-            .then(mpdUrl => {
-                console.log("Streaming da URL:", mpdUrl);
-                player.attachSource(mpdUrl);
-            })
-            .catch(error => {
-                console.error("Errore nel processo 5G Broadcast:", error);
-            });
-    }
- }
- else if (!isHLSavailable(newChannel)) {
-  console.log("HLS disponibile per il canale selezionato.");
-
-  const hlsUrl = getHLSLink(newChannel);
-	console.log(hlsUrl);
-
-  if (hlsUrl) {
-      console.log("Avvio del player HLS con URL:", hlsUrl);
-      localStorage.setItem('currentHLSUrl', hlsUrl);
-
-      // Carica il player HLS
-      //window.location.href = "hls/player.html";
-  } else {
-      console.error("Errore: Nessun link HLS disponibile per il canale selezionato.");
-      $("#notification").text("Errore: Nessun link HLS disponibile per il canale selezionato.").show();
-      setTimeout(() => $("#notification").hide(), 10000);
-  }
-  }
 }
+
+
+
 
 
 window.onload = function(){
@@ -143,7 +95,7 @@ window.onload = function(){
 		  $("#audio").show();
 	   }
  //      $("#pause a").text("Pause");
-	   $("#pause").show();
+	   //$("#pause").show();
 	   $("#play").hide();
 	});
 	var videoHLS = video;
@@ -154,6 +106,7 @@ window.onload = function(){
     manifestLoadingMaxRetryTimeout: 64000 // used by playlist-loader
     };
 	playerHLS = new Hls(config_hls);
+	//console.log(videoHLS);
 	playerHLS.attachMedia(videoHLS);
 	// playerHLS.initialize(video);
 	playerHLS.on(Hls.Events.MANIFEST_PARSED,function() {
@@ -290,6 +243,26 @@ function showEpg() {
 
 }
 
+function showProtocol() {
+
+	var notificationDiv = $("#notification");
+	console.log(selectedChannel.sourceTypes);
+	if (notificationDiv.length === 0) {
+			$(".main.container").append('<div id="notification" class="text-center text-white mt-4"></div>');
+			notificationDiv = $("#notification");
+	}
+
+	notificationDiv.text("Protocollo: " + selectedChannel.sourceTypes).show();
+
+	setTimeout(() => {
+			notificationDiv.hide();
+	}, 5000);
+}
+
+
+
+
+
 function closeEpg() {
 	$(".epg").hide();
 	epg.open = false;
@@ -334,24 +307,40 @@ function loadServicelist(list) {
 }
 
 function serviceListSelected() {
-  $("#servicelist_registry").hide();
-  $("#settings").hide();
-  if (serviceList.image) {
-    $("#list_logo").attr("src", serviceList.image);
-  } else {
-    $("#list_logo").attr("src", "images/logo_dvbi_sofia.png");
-  }
-  var channelIndex = 0;
-  for (var i = 0; i < serviceList.services.length; i++) {
-    var channel = new Channel();
-    channel.init(serviceList.services[i], channelIndex++);
-    channels.push(channel);
-  }
-  channels.sort(compareLCN);
-  populate();
-  epg = new EPG(channels);
-  channelSelected(channels[0].id);
+  serviceList
+    .then((resolvedServiceList) => {
+      $("#servicelist_registry").hide();
+      $("#settings").hide();
+      if (resolvedServiceList.image) {
+        $("#list_logo").attr("src", resolvedServiceList.image);
+      } else {
+        $("#list_logo").attr("src", "images/logo_dvbi_sofia.png");
+      }
+
+      var channelIndex = 0;
+      console.log(resolvedServiceList);
+      if (!resolvedServiceList.services) {
+        throw new Error("services è undefined in serviceList");
+      }
+
+      for (var i = 0; i < resolvedServiceList.services.length; i++) {
+        var channel = new Channel();
+        channel.init(resolvedServiceList.services[i], channelIndex++);
+        channels.push(channel);
+      }
+
+      channels.sort(compareLCN);
+      populate();
+      epg = new EPG(channels);
+      channelSelected(channels[0].id);
+    })
+    .catch((error) => {
+      console.error("Errore in serviceListSelected:", error);
+    });
 }
+
+
+
 
 
 function selectRegion() {
@@ -835,61 +824,8 @@ function togglePause() {
 }
 
 
-function is5GBroadcastAvailable(channel) {
-  //console.log("Canale che si sta controllando:", channel);
 
-  let is5GBroadcastAvailable = false;
 
-  if (channel && channel.serviceInstances) {
-    channel.serviceInstances.forEach((instance, index) => {
-      //console.log(`Analisi Service Instance ${index}:`, instance);
-      if (
-        instance.identifierBasedDelivery &&
-        instance.identifierBasedDelivery.url.startsWith("mbms://rom.3gpp.org")
-      ) {
-        //console.log(`Verifica 5G Broadcast per MBMS URL: ${instance.identifierBasedDelivery.url}`);
-        is5GBroadcastAvailable = true;
-        fiveg = true;
-      }
-    });
-  } else {
-    console.error("Nessuna Service Instance trovata per il canale selezionato.");
-  }
-
-  if (!is5GBroadcastAvailable) {
-    //console.log("Errore: La trasmissione in 5G Broadcast non è disponibile.");
-    $("#notification").show();
-    $("#notification").text("Errore: La trasmissione in 5G Broadcast non è disponibile!");
-  }
-
-  return is5GBroadcastAvailable;
-}
-
-function send5GBroadcastRequest(params) {
-  return fetch(FIVE_G_BROADCAST_RECEIVER_URL, {
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json"
-      },
-      body: JSON.stringify(params)
-  })
-  .then(response => {
-      if (!response.ok) {
-          throw new Error("Errore nella comunicazione con il ricevitore 5G Broadcast");
-      }
-      return response.json();
-  })
-  .then(data => {
-      console.log("Risposta dal server 5G Broadcast:", data);
-      return data.mpd_url;
-  })
-  .catch(error => {
-      console.error("Errore nella richiesta 5G Broadcast:", error);
-      $("#notification").show();
-      $("#notification").text("Errore: Non è stato possibile comunicare con il ricevitore 5G Broadcast.");
-      throw error;
-  });
-}
 
 function convertFrequnecy(frequency){
   let  range1 = [612, 70706];
@@ -906,48 +842,4 @@ function convertFrequnecy(frequency){
 function check_tmgi(tmgi){
   //console.log("Nuemro di caratteri tmgi: " + tmgi.length);
   return tmgi.length == 12;
-}
-
-function isHLSavailable(channel){
-  let isHLSavailable = false;
-
-  if (channel && channel.serviceInstances) {
-    channel.serviceInstances.forEach((instance, index) => {
-      //console.log(`Analisi Service Instance ${index}:`, instance);
-      if (
-        instance.identifierBasedDelivery &&
-        instance.identifierBasedDelivery.url.charAt(instance.identifierBasedDelivery.url.length-1) == 8
-      ) {
-        //console.log("sono dentro l'if e l'ultimo carattere è: " + instance.identifierBasedDelivery.url.charAt(instance.identifierBasedDelivery.url.length-1))
-        isHLSavailable = true;
-      }
-    });
-  } else {
-    console.error("Nessuna Service Instance trovata per il canale selezionato.");
-  }
-
-  if (!isHLSavailable) {
-    //console.log("Errore: La trasmissione in 5G Broadcast non è disponibile.");
-    $("#notification").show();
-    $("#notification").text("Errore: La trasmissione in HLS non è disponibile!");
-  }
-
-  return isHLSavailable;
-
-
-}
-
-function getHLSLink(channel) {
-  var hlsUrl;
-  if (channel && channel.serviceInstances) {
-    channel.serviceInstances.forEach((instance, index) => {
-      //console.log(`Analisi Service Instance ${index}:`, instance);
-      if (instance.identifierBasedDelivery.url.endsWith('8') ){
-        hlsUrl = instance.identifierBasedDelivery.url;
-        console.log(instance.identifierBasedDelivery.url);
-      }
-      });
-
-  return hlsUrl;
-  }
 }

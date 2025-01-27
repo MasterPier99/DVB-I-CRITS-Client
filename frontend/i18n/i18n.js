@@ -11,6 +11,7 @@ function I18n() {
   this.texts = [
     "epg_button",
     "settings_button",
+    //"protocol_button",
     "subtitle_button",
     "audio_button",
     "settings_title",

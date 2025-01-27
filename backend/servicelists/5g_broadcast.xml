@@ -28,7 +28,7 @@
   <!-- Canale RAI 1 -->
   <Service version="1">
     <UniqueIdentifier>tag:rai-referenceapp,2024:rai1</UniqueIdentifier>
-    <ServiceInstance priority="4">
+    <ServiceInstance priority="5">
       <DisplayName>RAI 1 DVB-S</DisplayName>
       <DVBSDeliveryParameters>
         <DVBTriplet origNetId="318" tsId="5200" serviceId="3401"/>
@@ -38,18 +38,18 @@
         <SymbolRate>29900</SymbolRate>
       </DVBSDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="1">
+    <ServiceInstance priority="2">
       <DisplayName>RAI 1 5G Broadcast</DisplayName>
       <IdentifierBasedDeliveryParameters>
         mbms://rom.3gpp.org&amp;tmgi=000001901056&amp;serviceArea=222ff&amp;
         frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI1%22
       </IdentifierBasedDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="2">
+    <ServiceInstance priority="4">
       <DisplayName>RAI 1 OTT (HLS)</DisplayName>
-      <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
+      <OtherDeliveryParameters contentType="application/vnd.apple.mpegurl">
         https://5gemerge.crits.rai.it/5G-EMERGE/Live/hls/RaiScuola/RaiScuola.m3u8
-      </IdentifierBasedDeliveryParameters>
+      </OtherDeliveryParameters>
     </ServiceInstance>
     <ServiceName>RAI 1</ServiceName>
     <ProviderName>RAI</ProviderName>
@@ -75,7 +75,7 @@
         frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI2%22
       </IdentifierBasedDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="2">
+    <ServiceInstance priority="14">
       <DisplayName>RAI 2 OTT (DASH)</DisplayName>
       <DASHDeliveryParameters>
           <dvbi-types:URI>https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd</dvbi-types:URI>
@@ -83,9 +83,9 @@
     </ServiceInstance>
     <ServiceInstance priority="1">
       <DisplayName>RAI 2 OTT (HLS)</DisplayName>
-      <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
+      <OtherDeliveryParameters  contentType="application/vnd.apple.mpegurl">
          https://5gemerge.crits.rai.it/5G-EMERGE/Live/hls/RaiScuola/RaiScuola.m3u8
-      </IdentifierBasedDeliveryParameters>
+      </OtherDeliveryParameters>
     </ServiceInstance>
     <ServiceName>RAI 2</ServiceName>
     <ProviderName>RAI</ProviderName>
@@ -112,7 +112,7 @@
         frequency=70716&amp;subCarrierSpacing=1.25&amp;bandwidth=8&amp;serviceID=%22RAI3%22
       </IdentifierBasedDeliveryParameters>
     </ServiceInstance>
-    <ServiceInstance priority="5">
+    <ServiceInstance priority="1">
       <DisplayName>RAI 3 OTT (DASH)</DisplayName>
       <DASHDeliveryParameters>
           <dvbi-types:URI>https://5gemerge.crits.rai.it/5G-EMERGE/Live/dash/crits_linear/crits_linear.mpd</dvbi-types:URI>
@@ -120,9 +120,9 @@
     </ServiceInstance>
     <ServiceInstance priority="10">
       <DisplayName>RAI 3 OTT (HLS)</DisplayName>
-      <IdentifierBasedDeliveryParameters contentType="application/vnd.apple.mpegurl">
+      <OtherDeliveryParameters contentType="application/vnd.apple.mpegurl">
         https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8
-      </IdentifierBasedDeliveryParameters>
+      </OtherDeliveryParameters>
     </ServiceInstance>
     <ServiceName>RAI 3</ServiceName>
     <ProviderName>RAI</ProviderName>

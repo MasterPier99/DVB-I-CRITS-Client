@@ -1,4 +1,10 @@
 var hlsPlayed = false
+var serverUrl;
+var serverUrl;
+
+
+
+
 
 Channel.prototype.getNowNext = function (callback) {
     var self = this;
@@ -175,11 +181,13 @@ Channel.prototype.getNowNext = function (callback) {
   };
 
   Channel.prototype.channelSelected = function () {
+
+
     var self = this;
     $("#notification").hide();
     self.element.classList.add("active");
     self.selected = true;
-    var update =function () {
+    var update =async function () {
         self.serviceInstance = self.getServiceInstance();
         if(self.availablityTimer) {
           clearInterval(self.availablityTimer);
@@ -198,6 +206,11 @@ Channel.prototype.getNowNext = function (callback) {
              $("#notification").text("Service not available");
            }
         }
+
+
+
+
+
         self.setProgramChangedTimer();
         self.updateChannelInfo();
         var mediaPresentationApp = self.getMediaPresentationApp(self.serviceInstance);
@@ -209,9 +222,10 @@ Channel.prototype.getNowNext = function (callback) {
                 //console.log(self);
                 //console.log(self.sourceTypes);
                 if(self.sourceTypes=="HLS") {
-                    console.log("SONO ENTRATO");
+                    //console.log("SONO ENTRATO645645");
                   player.attachSource(null);
                   playerHLS.recoverMediaError();
+                  console.log("server url " + self.serviceInstance.dashUrl);
                   playerHLS.loadSource(self.serviceInstance.dashUrl);
                   hlsPlayed = true;
                 } else {
@@ -537,3 +551,42 @@ Channel.prototype.getNowNext = function (callback) {
     }
     return true;
   };
+
+
+
+  async function sendServerRequest(selectedChannel, url) {
+
+    const payload = {
+        channelId: selectedChannel.id,
+        channelTitle: selectedChannel.title,
+        url: url.trim(),
+    };
+
+    try {
+        const response = await fetch(FIVE_G_BROADCAST_RECEIVER_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Errore nella risposta del server: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+
+        if (data && data.receivedUrl) {
+            console.log("URL ricevuto dal server:", data.receivedUrl);
+            return data.receivedUrl; // Restituisce l'URL ricevuto
+        } else {
+            console.error("Il server non ha restituito un URL valido.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Errore durante l'invio della richiesta al server 5G:", error);
+        return null;
+    }
+  }

@@ -47,7 +47,7 @@ function parseContentGuideSource(src) {
 }
 
 
-function parseServiceList(data,dvbChannels,supportedDrmSystems) {
+async function parseServiceList(data,dvbChannels,supportedDrmSystems) {
     var i, j, k, l;
     var serviceList = {};
     var list = [];
@@ -252,7 +252,6 @@ function parseServiceList(data,dvbChannels,supportedDrmSystems) {
             }
         }
         var serviceInstances = services[i].getElementsByTagName("ServiceInstance");
-        var IdentifierBasedDeliveryParameters = services[i].getElementsByTagName("IdentifierBasedDeliveryParameters");
         //console.log(IdentifierBasedDeliveryParameters);
         var instances = [];
         var sourceTypes = [];
@@ -260,147 +259,168 @@ function parseServiceList(data,dvbChannels,supportedDrmSystems) {
         var selectedInstance = null;
 
         for (j = 0; j < serviceInstances.length; j++) {
-            var currentPriority = parseInt(serviceInstances[j].getAttribute("priority"), 10);
-            //var currentcontentType = IdentifierBasedDeliveryParameters.getAttribute("contentType");
-            //console.log(currentcontentType);
-            var instance = {};
+          var currentPriority = parseInt(serviceInstances[j].getAttribute("priority"), 10);
+          //var currentcontentType = IdentifierBasedDeliveryParameters.getAttribute("contentType");
+          //console.log(currentcontentType);
+          var instance = {};
 
-            // Estrai i titoli del DisplayName
-            var displayNames = serviceInstances[j].getElementsByTagName("DisplayName");
-            instance.titles = [];
-            for (k = 0; k < displayNames.length; k++) {
-                instance.titles.push(getText(displayNames[k]));
-            }
-            instance.priority = currentPriority;
-            instance.contentProtection = [];
-            instance.parallelApps = [];
-            instance.mediaPresentationApps = [];
+          // Estrai i titoli del DisplayName
+          var displayNames = serviceInstances[j].getElementsByTagName("DisplayName");
+          instance.titles = [];
+          for (k = 0; k < displayNames.length; k++) {
+              instance.titles.push(getText(displayNames[k]));
+          }
+          instance.priority = currentPriority;
+          instance.contentProtection = [];
+          instance.parallelApps = [];
+          instance.mediaPresentationApps = [];
 
-            // Gestione del ContentProtection
-            var contentProtectionElements = getChildElements(serviceInstances[j], "ContentProtection");
-            for (k = 0; k < contentProtectionElements.length; k++) {
-                for (l = 0; l < contentProtectionElements[k].childNodes.length; l++) {
-                    if (contentProtectionElements[k].childNodes[l].nodeName === "DRMSystemId") {
-                        var drmSystem = contentProtectionElements[k].childNodes[l];
-                        var drm = {};
-                        drm.encryptionScheme = drmSystem.getAttribute("encryptionScheme");
-                        drm.drmSystemId = drmSystem.getElementsByTagName("DRMSystemId")[0].childNodes[0].nodeValue;
-                        drm.cpsIndex = drmSystem.getAttribute("cpsIndex");
-                        instance.contentProtection.push(drm);
+          // Gestione del ContentProtection
+          var contentProtectionElements = getChildElements(serviceInstances[j], "ContentProtection");
+          for (k = 0; k < contentProtectionElements.length; k++) {
+              for (l = 0; l < contentProtectionElements[k].childNodes.length; l++) {
+                  if (contentProtectionElements[k].childNodes[l].nodeName === "DRMSystemId") {
+                      var drmSystem = contentProtectionElements[k].childNodes[l];
+                      var drm = {};
+                      drm.encryptionScheme = drmSystem.getAttribute("encryptionScheme");
+                      drm.drmSystemId = drmSystem.getElementsByTagName("DRMSystemId")[0].childNodes[0].nodeValue;
+                      drm.cpsIndex = drmSystem.getAttribute("cpsIndex");
+                      instance.contentProtection.push(drm);
+                  }
+              }
+          }
+
+          // Verifica compatibilità DRM
+          if (supportedDrmSystems && instance.contentProtection.length > 0) {
+              var supported = false;
+              for (k = 0; k < instance.contentProtection.length; k++) {
+                  for (l = 0; l < supportedDrmSystems.length; l++) {
+                      if (instance.contentProtection[k].drmSystemId.toLowerCase() === supportedDrmSystems[l].toLowerCase()) {
+                          supported = true;
+                          break;
+                      }
+                  }
+                  if (supported) break;
+              }
+              if (!supported) continue;
+          }
+
+          // Gestione dell'Availability
+          var availability = getChildElements(serviceInstances[j], "Availability");
+          instance.availability = null;
+          if (availability.length > 0) {
+              instance.availability = [];
+              var periods = getChildElements(availability[0], "Period");
+              for (k = 0; k < periods.length; k++) {
+                  var period = {};
+                  period.validFrom = periods[k].getAttribute("validFrom");
+                  period.validTo = periods[k].getAttribute("validTo");
+                  period.intervals = [];
+                  var intervals = getChildElements(periods[k], "Interval");
+                  for (l = 0; l < intervals.length; l++) {
+                      var interval = {};
+                      interval.days = intervals[l].getAttribute("days");
+                      interval.recurrence = intervals[l].getAttribute("recurrence");
+                      interval.startTime = intervals[l].getAttribute("startTime");
+                      interval.endTime = intervals[l].getAttribute("endTime");
+                      period.intervals.push(interval);
+                  }
+                  instance.availability.push(period);
+              }
+          }
+
+          // Gestione delle URI per ogni protocollo
+          if (currentPriority < highestPriority) {
+              var namespaceURI = "urn:dvb:metadata:servicediscovery:2024";
+
+            try {
+                let url = null;
+                let sourceType = null;
+
+                // DASH Delivery
+                if (serviceInstances[j].getElementsByTagName("DASHDeliveryParameters").length > 0) {
+                    var tryURI = serviceInstances[j].getElementsByTagName("URI")[0] || serviceInstances[j].getElementsByTagName("dvbi-types:URI")[0];
+                    if (tryURI) {
+                        url = tryURI.childNodes[0].nodeValue;
+                        sourceType = "DVB-DASH";
                     }
                 }
-            }
 
-            // Verifica compatibilità DRM
-            if (supportedDrmSystems && instance.contentProtection.length > 0) {
-                var supported = false;
-                for (k = 0; k < instance.contentProtection.length; k++) {
-                    for (l = 0; l < supportedDrmSystems.length; l++) {
-                        if (instance.contentProtection[k].drmSystemId.toLowerCase() === supportedDrmSystems[l].toLowerCase()) {
-                            supported = true;
-                            break;
-                        }
+                // Other Delivery Parameters
+                if (!url && serviceInstances[j].getElementsByTagNameNS(namespaceURI, "OtherDeliveryParameters").length > 0) {
+                    var tryURI = serviceInstances[j].getElementsByTagNameNS(namespaceURI, "OtherDeliveryParameters")[0];
+                    if (tryURI) {
+                        url = tryURI.textContent.trim();
+                        sourceType = "HLS";
                     }
-                    if (supported) break;
                 }
-                if (!supported) continue;
-            }
 
-            // Gestione dell'Availability
-            var availability = getChildElements(serviceInstances[j], "Availability");
-            instance.availability = null;
-            if (availability.length > 0) {
-                instance.availability = [];
-                var periods = getChildElements(availability[0], "Period");
-                for (k = 0; k < periods.length; k++) {
-                    var period = {};
-                    period.validFrom = periods[k].getAttribute("validFrom");
-                    period.validTo = periods[k].getAttribute("validTo");
-                    period.intervals = [];
-                    var intervals = getChildElements(periods[k], "Interval");
-                    for (l = 0; l < intervals.length; l++) {
-                        var interval = {};
-                        interval.days = intervals[l].getAttribute("days");
-                        interval.recurrence = intervals[l].getAttribute("recurrence");
-                        interval.startTime = intervals[l].getAttribute("startTime");
-                        interval.endTime = intervals[l].getAttribute("endTime");
-                        period.intervals.push(interval);
+                // Identifier-Based Delivery Parameters
+                if (!url && serviceInstances[j].getElementsByTagName("IdentifierBasedDeliveryParameters").length > 0) {
+                    var tryURI = serviceInstances[j].getElementsByTagName("IdentifierBasedDeliveryParameters")[0];
+                    if (tryURI) {
+                        url = tryURI.childNodes[0].nodeValue;
+                        sourceType = "5G Broadcast";
                     }
-                    instance.availability.push(period);
                 }
-            }
 
-            // Gestione delle URI per ogni protocollo
-            if (currentPriority < highestPriority) {
-                try {
-                    if (serviceInstances[j].getElementsByTagName("DASHDeliveryParameters").length > 0) {
-                        var tryURI = serviceInstances[j].getElementsByTagName("URI")[0] || serviceInstances[j].getElementsByTagName("dvbi-types:URI")[0];
-                        if (tryURI) {
-                            instance.dashUrl = tryURI.childNodes[0].nodeValue;
-                            sourceTypes = ["DVB-DASH"];
-                            selectedInstance = instance;
-                            highestPriority = currentPriority;
-                        }
-                    } else if (serviceInstances[j].getElementsByTagName("OtherDeliveryParameters").length > 0) {
-                        var tryURI = serviceInstances[j].getElementsByTagName("URI")[0] || serviceInstances[j].getElementsByTagName("dvbi-types:URI")[0];
-                        if (tryURI) {
-                            instance.dashUrl = tryURI.childNodes[0].nodeValue;
-                            sourceTypes = ["HLS"];
-                            selectedInstance = instance;
-                            highestPriority = currentPriority;
-                        }
-                    } else if (serviceInstances[j].getElementsByTagName("IdentifierBasedDeliveryParameters").length > 0) {
-                      console.log(serviceInstances[j].getAttribute("contentType"));
-                        var tryURI = serviceInstances[j].getElementsByTagName("IdentifierBasedDeliveryParameters")[0];
-                        if (tryURI) {
-                            instance.dashUrl = tryURI.childNodes[0].nodeValue;
-                            sourceTypes = ["HLS"];
-                            selectedInstance = instance;
-                            highestPriority = currentPriority;
-                        }
-                    } else if (serviceInstances[j].getElementsByTagName("SATIPDeliveryParameters").length > 0) {
-                        instance.dashUrl = serviceInstances[j].getElementsByTagName("QueryParameters")[0].childNodes[0].nodeValue;
-                        sourceTypes = ["SATIP"];
-                        selectedInstance = instance;
-                        highestPriority = currentPriority;
-                    } else if (dvbChannels) {
-                        var triplets = serviceInstances[j].getElementsByTagName("DVBTriplet");
-                        if (triplets.length > 0) {
-                            var triplet2 = triplets[0].getAttribute("origNetId") + "." +
-                                           triplets[0].getAttribute("tsId") + "." +
-                                           triplets[0].getAttribute("serviceId");
-                            var dvbChannel2 = channelmap[triplet2];
-                            if (dvbChannel2) {
-                                if (serviceInstances[j].getElementsByTagName("DVBTDeliveryParameters").length > 0) {
-                                    sourceTypes.push("DVB-T");
-                                    instance.dvbChannel = dvbChannel2;
-                                    selectedInstance = instance;
-                                    highestPriority = currentPriority;
-                                } else if (serviceInstances[j].getElementsByTagName("DVBSDeliveryParameters").length > 0) {
-                                    sourceTypes.push("DVB-S");
-                                    instance.dvbChannel = dvbChannel2;
-                                    selectedInstance = instance;
-                                    highestPriority = currentPriority;
-                                } else if (serviceInstances[j].getElementsByTagName("DVBCDeliveryParameters").length > 0) {
-                                    sourceTypes.push("DVB-C");
-                                    instance.dvbChannel = dvbChannel2;
-                                    selectedInstance = instance;
-                                    highestPriority = currentPriority;
-                                }
-                            }
-                        }
+                // SATIP Delivery
+                if (!url && serviceInstances[j].getElementsByTagName("SATIPDeliveryParameters").length > 0) {
+                    var tryURI = serviceInstances[j].getElementsByTagName("QueryParameters")[0];
+                    if (tryURI) {
+                        url = tryURI.childNodes[0].nodeValue;
+                        sourceType = "SATIP";
                     }
-                } catch (e) {
-                    console.error("Errore:", e);
                 }
+
+                // Se un URL è stato trovato, verifica che funzioni
+                if (url && await testURL(url)) {
+                  console.log(`URL valido per il protocollo ${sourceType} con priorità ${currentPriority}: ${url}`);
+                  try {
+                      // Invia l'URL al server 5G Broadcast
+                      const serverUrl = await sendServerRequest(instance, url);
+
+                      if (serverUrl) {
+                          console.log("Trasmissione avviata con URL restituito dal server:", serverUrl);
+                          instance.dashUrl = serverUrl; // Usa l'URL restituito dal server
+                          sourceTypes = [sourceType];
+                          selectedInstance = instance;
+                          highestPriority = currentPriority; // Aggiorna priorità
+
+                          // Opzionalmente, puoi aggiungere logica per il player
+                          // player.attachSource(serverUrl);
+                      } else {
+                          console.error("Trasmissione non avviata. Il server non ha restituito un URL valido.");
+                          $("#notification").text("Errore: il server non ha restituito un URL valido.");
+                          $("#notification").show();
+                          setTimeout(function () {
+                              $("#notification").hide();
+                          }, 5000);
+                      }
+                  } catch (error) {
+                      console.error("Errore durante l'invio della richiesta al server 5G Broadcast:", error);
+                      $("#notification").text("Errore durante la connessione al server.");
+                      $("#notification").show();
+                      setTimeout(function () {
+                          $("#notification").hide();
+                      }, 5000);
+                  }
+              } else {
+                  console.log(`URL non valido o non trovato per priorità ${currentPriority}`);
+              }
+
+            } catch (e) {
+                console.error("Errore durante il controllo del protocollo:", e);
             }
         }
+    }
 
-        // Aggiungi l'istanza selezionata alla lista finale
-        if (selectedInstance) {
-            instances.push(selectedInstance);
-            console.log(`Selezionato protocollo con priorità più alta (${highestPriority}) per il servizio.`);
-        }
+    // Aggiungi l'istanza selezionata alla lista finale
+    if (selectedInstance) {
+        instances.push(selectedInstance);
+        console.log(`Selezionato protocollo con priorità più alta (${highestPriority}) per il servizio.`);
+    }
+
 
         for(j = 0;j < lcnList.length;j++) {
             if(lcnList[j].getAttribute("serviceRef") == chan.id) {
@@ -861,3 +881,14 @@ var creditsTypes = {
   "urn:tva:metadata:cs:TVARoleCS:2011:AD6":"presenter",
   "urn:mpeg:mpeg7:cs:RoleCS:2001:ACTOR":"actor"
 };
+
+
+async function testURL(url) {
+  try {
+      const response = await fetch(url, { method: "HEAD" });
+      return response.ok; // true se lo status è 200-299
+  } catch (error) {
+      console.error(`Errore durante il test dell'URL ${url}:`, error);
+      return false;
+  }
+}
