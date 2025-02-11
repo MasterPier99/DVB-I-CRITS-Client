@@ -252,7 +252,6 @@ async function parseServiceList(data,dvbChannels,supportedDrmSystems) {
             }
         }
         var serviceInstances = services[i].getElementsByTagName("ServiceInstance");
-        //console.log(IdentifierBasedDeliveryParameters);
         var instances = [];
         var sourceTypes = [];
         var highestPriority = 10000; // Priorità inizializzata a un valore molto basso
@@ -261,7 +260,6 @@ async function parseServiceList(data,dvbChannels,supportedDrmSystems) {
         for (j = 0; j < serviceInstances.length; j++) {
           var currentPriority = parseInt(serviceInstances[j].getAttribute("priority"), 10);
           //var currentcontentType = IdentifierBasedDeliveryParameters.getAttribute("contentType");
-          //console.log(currentcontentType);
           var instance = {};
 
           // Estrai i titoli del DisplayName
@@ -377,7 +375,7 @@ async function parseServiceList(data,dvbChannels,supportedDrmSystems) {
                 if (url && await testURL(url)) {
                   console.log(`URL valido per il protocollo ${sourceType} con priorità ${currentPriority}: ${url}`);
                   try {
-                      // Invia l'URL al server 5G Broadcast
+                      // Invia l'URL al ricevitore 5G
                       const serverUrl = await sendServerRequest(instance, url);
 
                       if (serverUrl) {
@@ -387,8 +385,7 @@ async function parseServiceList(data,dvbChannels,supportedDrmSystems) {
                           selectedInstance = instance;
                           highestPriority = currentPriority; // Aggiorna priorità
 
-                          // Opzionalmente, puoi aggiungere logica per il player
-                          // player.attachSource(serverUrl);
+
                       } else {
                           console.error("Trasmissione non avviata. Il server non ha restituito un URL valido.");
                           $("#notification").text("Errore: il server non ha restituito un URL valido.");
@@ -415,7 +412,7 @@ async function parseServiceList(data,dvbChannels,supportedDrmSystems) {
         }
     }
 
-    // Aggiungi l'istanza selezionata alla lista finale
+    // Aggiunge l'istanza selezionata alla lista finale
     if (selectedInstance) {
         instances.push(selectedInstance);
         console.log(`Selezionato protocollo con priorità più alta (${highestPriority}) per il servizio.`);
