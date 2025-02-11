@@ -1,6 +1,6 @@
 var hlsPlayed = false
 var serverUrl;
-var serverUrl;
+var FIVE_G_BROADCAST_RECEIVER_URL = "http://localhost/server_5g/server_5g.php"
 
 
 

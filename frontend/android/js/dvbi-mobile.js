@@ -17,7 +17,7 @@ var pinFailureCallback = null;
 var serviceList = null;
 var language_settings = null;
 const UTC_TIME_SOURCE = "https://time.akamai.com/?iso";
-var FIVE_G_BROADCAST_RECEIVER_URL = "http://localhost/server_5g/server_5g.php"
+
 
 
 //TODO use MSE-EME to determine actual DRM support, although
